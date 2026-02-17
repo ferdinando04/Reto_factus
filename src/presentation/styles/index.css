@@ -95,6 +95,41 @@ a {
   z-index: 100;
 }
 
+/* --- Table Architecture --- */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+th {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 1.25rem 1.5rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+td {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  vertical-align: middle;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
 .input-nova {
   width: 100%;
   background: rgba(255, 255, 255, 0.03);

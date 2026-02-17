@@ -19,27 +19,30 @@ import {
 const Dashboard = ({ onNewInvoice, invoices = [] }) => {
     const stats = [
         {
-            title: 'Total Facturado',
-            value: '$0.00',
-            change: '0%',
+            title: 'Monto Total Facturado',
+            value: `$${invoices.reduce((acc, inv) => acc + inv.total, 0).toLocaleString()}`,
+            change: '+12.5%',
             isPositive: true,
-            icon: <TrendingUp size={20} className="text-emerald-400" />
+            icon: <TrendingUp size={24} className="text-emerald-400" />,
+            isLarge: true
         },
         {
-            title: 'Facturas Emitidas',
+            title: 'Documentos Emitidos',
             value: invoices.length.toString(),
-            change: '0',
+            change: instances_count || '0',
             isPositive: true,
             icon: <FileText size={20} className="text-indigo-400" />
         },
         {
             title: 'Pendientes DIAN',
             value: '0',
-            change: '0%',
+            change: 'Sin errores',
             isPositive: true,
             icon: <AlertCircle size={20} className="text-amber-400" />
         }
     ];
+
+    const instances_count = invoices.length > 0 ? `+${invoices.length}` : '0';
 
     return (
         <div className="animate-fade-in space-y-12">
@@ -64,21 +67,35 @@ const Dashboard = ({ onNewInvoice, invoices = [] }) => {
                 </button>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Bento Grid Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {stats.map((stat, index) => (
-                    <div key={index} className="card-nova p-8 group">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 group-hover:bg-indigo-500/10 group-hover:border-indigo-500/20 transition-all duration-500">
+                    <div
+                        key={index}
+                        className={`card-nova p-6 group transition-all duration-500 overflow-hidden relative ${stat.isLarge ? 'md:col-span-2' : ''}`}
+                    >
+                        {/* Spotlight Effect Background */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/0 via-indigo-500/0 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+
+                        <div className="flex items-start justify-between relative z-10">
+                            <div>
+                                <h3 className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-1">{stat.title}</h3>
+                                <p className={`font-bold text-white tracking-tight ${stat.isLarge ? 'text-4xl' : 'text-2xl'}`}>{stat.value}</p>
+                            </div>
+                            <div className={`p-3 rounded-xl bg-white/5 border border-white/10 group-hover:scale-110 group-hover:bg-indigo-500/10 group-hover:border-indigo-500/20 transition-all duration-500`}>
                                 {stat.icon}
                             </div>
-                            <div className={`flex items-center gap-1 text-xs font-bold tracking-tighter ${stat.isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        </div>
+
+                        <div className="mt-8 flex items-center justify-between relative z-10">
+                            <div className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${stat.isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                                 {stat.change}
-                                {stat.isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                                {stat.isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                            </div>
+                            <div className="h-[2px] w-12 bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-indigo-500/40 w-1/2"></div>
                             </div>
                         </div>
-                        <h3 className="text-slate-500 text-sm font-semibold uppercase tracking-wider">{stat.title}</h3>
-                        <p className="text-3xl font-bold mt-2 text-white">{stat.value}</p>
                     </div>
                 ))}
             </div>
