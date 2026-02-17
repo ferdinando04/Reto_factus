@@ -63,6 +63,11 @@ function App() {
         }
     };
 
+    const handleLogout = () => {
+        setIsLoggedIn(false);
+        setUser(null);
+    };
+
     if (!isLoggedIn) {
         return (
             <Layout>
@@ -72,24 +77,27 @@ function App() {
     }
 
     return (
-        <Layout user={user}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Layout user={user} onLogout={handleLogout} setView={setView} currentView={view}>
+            <div className="container py-8">
                 {view === 'dashboard' ? (
                     <Dashboard
                         onNewInvoice={() => setView('billing-form')}
                         invoices={invoices}
                     />
                 ) : (
-                    <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                        <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-                                Emisión de Factura Electrónica
-                            </h2>
+                    <div className="animate-fade-in">
+                        <div className="flex items-center justify-between mb-10 pb-4 border-b border-white/5">
+                            <div>
+                                <h2 className="text-3xl font-bold text-gradient">
+                                    Emisión de Factura
+                                </h2>
+                                <p className="text-slate-500 text-xs uppercase tracking-widest mt-1">Sincronización DIAN Activa</p>
+                            </div>
                             <button
                                 onClick={() => setView('dashboard')}
-                                className="text-sm text-slate-400 hover:text-indigo-400 transition-colors uppercase tracking-widest font-bold"
+                                className="btn-primary p-3 rounded-xl bg-white/5 hover:bg-white/10 text-xs"
                             >
-                                ← Volver al Dashboard
+                                ← Panel General
                             </button>
                         </div>
 

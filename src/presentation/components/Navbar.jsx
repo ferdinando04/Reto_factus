@@ -5,7 +5,7 @@ import { Rocket, Bell, User, LogOut } from 'lucide-react';
  * Navbar Component
  * Refinado con soporte para sesión de usuario y logout.
  */
-const Navbar = ({ user, onLogout }) => {
+const Navbar = ({ user, onLogout, setView, currentView }) => {
     return (
         <nav className="navbar-nova z-50">
             <div className="container py-4 flex items-center justify-between">
@@ -23,12 +23,13 @@ const Navbar = ({ user, onLogout }) => {
                     </div>
                 </div>
 
-                <div className="hidden lg:flex items-center gap-8">
-                    <NavLink href="#" active>Dashboard</NavLink>
-                    <NavLink href="#">Facturas</NavLink>
-                    <NavLink href="#">Buzón DIAN</NavLink>
-                    <NavLink href="#">Configuración</NavLink>
-                </div>
+                {user && (
+                    <div className="hidden lg:flex items-center gap-8">
+                        <NavLink onClick={() => setView('dashboard')} active={currentView === 'dashboard'}>Dashboard</NavLink>
+                        <NavLink onClick={() => setView('billing-form')} active={currentView === 'billing-form'}>Facturador</NavLink>
+                        <NavLink href="#">Buzón DIAN</NavLink>
+                    </div>
+                )}
 
                 <div className="flex items-center gap-4">
                     {user && (
@@ -61,13 +62,13 @@ const Navbar = ({ user, onLogout }) => {
     );
 };
 
-const NavLink = ({ href, children, active }) => (
-    <a
-        href={href}
-        className={`text-sm font-medium transition-all ${active ? 'text-indigo-400 border-b-2 border-indigo-400 pb-1' : 'text-slate-400 hover:text-white pb-1'}`}
+const NavLink = ({ href, children, active, onClick }) => (
+    <button
+        onClick={onClick}
+        className={`text-sm font-medium transition-all bg-transparent border-none cursor-pointer ${active ? 'text-indigo-400 border-b-2 border-indigo-400 pb-1' : 'text-slate-400 hover:text-white pb-1'}`}
     >
         {children}
-    </a>
+    </button>
 );
 
 export default Navbar;

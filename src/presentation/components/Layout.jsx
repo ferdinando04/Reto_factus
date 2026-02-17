@@ -6,16 +6,16 @@ import Navbar from './Navbar';
  * Proporciona la estructura visual base con efectos de Glassmorphism
  * y fondo animado (Blobs).
  */
-const Layout = ({ children }) => {
+const Layout = ({ children, user, onLogout, setView, currentView }) => {
     return (
         <div className="min-h-screen flex flex-col relative overflow-hidden">
             {/* Background Decorations */}
             <div className="blob" style={{ top: '-10%', left: '-5%' }}></div>
-            <div className="blob" style={{ bottom: '0%', right: '-5%', animationDelay: '-5s', background: 'linear-gradient(135deg, #a855f7, #6366f1)' }}></div>
+            <div className="blob" style={{ bottom: '0%', right: '-5%', background: 'linear-gradient(135deg, #a855f7, #6366f1)', opacity: '0.05' }}></div>
 
-            <Navbar />
+            <Navbar user={user} onLogout={onLogout} setView={setView} currentView={currentView} />
 
-            <main className="flex-1 container mx-auto px-6 py-12 relative z-10">
+            <main className="flex-1 relative z-10">
                 {children}
             </main>
 
