@@ -132,6 +132,30 @@ a {
 }
 
 /* --- Utility Engine (Must be last for overrides) --- */
+.bg-transparent {
+  background: transparent !important;
+}
+
+.border-none {
+  border: none !important;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
+
+.opacity-30 {
+  opacity: 0.3;
+}
+
+.p-0 {
+  padding: 0 !important;
+}
+
 .flex {
   display: flex;
 }
