@@ -19,13 +19,13 @@ const Login = ({ onLogin }) => {
     };
 
     return (
-        <div className="flex items-center justify-center py-12 animate-fade-in">
-            <div className="card-nova w-full max-w-md p-8 relative">
+        <div className="flex items-center justify-center py-8 animate-fade-in">
+            <div className="card-nova w-full max-w-md p-6 relative">
                 {/* Accent blobs */}
                 <div className="absolute -top-12 -left-12 w-40 h-40 bg-indigo-500/10 blur-2xl rounded-full"></div>
                 <div className="absolute -bottom-12 -right-12 w-40 h-40 bg-purple-500/10 blur-2xl rounded-full"></div>
 
-                <div className="text-center mb-8 relative">
+                <div className="text-center mb-6 relative">
                     <div className="inline-flex p-4 rounded-3xl bg-white/5 border border-white/10 mb-6 shadow-inner">
                         <Rocket size={40} className="text-indigo-400" />
                     </div>
@@ -37,7 +37,7 @@ const Login = ({ onLogin }) => {
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-5 relative">
+                <form onSubmit={handleSubmit} className="space-y-4 relative">
                     <div className="space-y-2">
                         <label className="text-xs font-semibold text-slate-500 ml-1 uppercase tracking-widest">Client Credentials</label>
                         <div className="relative">
@@ -83,8 +83,8 @@ const Login = ({ onLogin }) => {
                     </div>
                 </form>
 
-                <div className="mt-8 text-center border-t border-white/10 pt-6">
-                    <p className="text-xs text-slate-400">
+                <div className="mt-6 text-center border-t border-white/10 pt-4">
+                    <p className="text-xs text-white/50">
                         ¿Requieres acceso? <a href="https://factus.co" target="_blank" className="text-indigo-400 hover:text-indigo-300 font-bold no-underline transition-colors uppercase tracking-wider">Solicitar credenciales</a>
                     </p>
                 </div>
