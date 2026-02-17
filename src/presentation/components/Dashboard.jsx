@@ -17,6 +17,8 @@ import {
  * Implementa la estética "Liquid Glass 2026" con widgets de estadísticas y logs de actividad.
  */
 const Dashboard = ({ onNewInvoice, invoices = [] }) => {
+    const instances_count = invoices.length > 0 ? `+${invoices.length}` : '0';
+
     const stats = [
         {
             title: 'Monto Total Facturado',
@@ -29,7 +31,7 @@ const Dashboard = ({ onNewInvoice, invoices = [] }) => {
         {
             title: 'Documentos Emitidos',
             value: invoices.length.toString(),
-            change: instances_count || '0',
+            change: instances_count,
             isPositive: true,
             icon: <FileText size={20} className="text-indigo-400" />
         },
@@ -41,8 +43,6 @@ const Dashboard = ({ onNewInvoice, invoices = [] }) => {
             icon: <AlertCircle size={20} className="text-amber-400" />
         }
     ];
-
-    const instances_count = invoices.length > 0 ? `+${invoices.length}` : '0';
 
     return (
         <div className="animate-fade-in space-y-12">
