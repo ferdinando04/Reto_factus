@@ -33,4 +33,8 @@ dist-ssr
 # Gemini/Agentic
 .gemini
 .agent
+.agents
+.augment
+.claude
+.windsurf
 /tmp

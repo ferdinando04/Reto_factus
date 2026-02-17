@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Rocket, Lock, Mail, ArrowRight } from 'lucide-react';
+import { Rocket, Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
 
 /**
  * Login Component
@@ -12,7 +12,6 @@ const Login = ({ onLogin }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        // Simulación de delay para mostrar feedback visual premium
         setTimeout(() => {
             onLogin(credentials);
             setLoading(false);
@@ -20,47 +19,44 @@ const Login = ({ onLogin }) => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-[80vh]">
-            <div className="card-nova w-full max-w-md relative overflow-hidden">
-                {/* Decorative glow */}
-                <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/20 blur-3xl rounded-full"></div>
+        <div className="flex items-center justify-center min-h-[85vh] animate-fade-in">
+            <div className="card-nova w-full max-w-md p-10 relative">
+                {/* Accent blobs */}
+                <div className="absolute -top-12 -left-12 w-40 h-40 bg-indigo-500/10 blur-2xl rounded-full"></div>
+                <div className="absolute -bottom-12 -right-12 w-40 h-40 bg-purple-500/10 blur-2xl rounded-full"></div>
 
-                <div className="text-center mb-10">
-                    <div className="inline-flex p-4 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 mb-4">
-                        <Rocket size={32} className="text-indigo-500" />
+                <div className="text-center mb-10 relative">
+                    <div className="inline-flex p-4 rounded-3xl bg-white/5 border border-white/10 mb-6 shadow-inner">
+                        <Rocket size={40} className="text-indigo-400" />
                     </div>
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-                        Bienvenido
+                    <h2 className="text-4xl font-bold text-gradient mb-3">
+                        Factus Nova
                     </h2>
-                    <p className="text-slate-400 mt-2 text-sm">
-                        Ingresa tus credenciales de Factus para comenzar.
+                    <p className="text-slate-400 text-sm font-medium tracking-wide">
+                        ENTERPRISE INVOICING SOLUTION
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6 relative">
                     <div className="space-y-2">
-                        <label className="text-xs font-medium text-slate-400 ml-1 uppercase tracking-wider">Client ID</label>
-                        <div className="relative group">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={18} />
+                        <label className="text-xs font-semibold text-slate-500 ml-1 uppercase tracking-widest">Client Credentials</label>
+                        <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                             <input
                                 type="text"
-                                className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all text-sm"
-                                placeholder="Ingresa tu Client ID"
+                                className="input-nova pl-12"
+                                placeholder="Client ID"
                                 value={credentials.clientId}
                                 onChange={(e) => setCredentials({ ...credentials, clientId: e.target.value })}
                                 required
                             />
                         </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-medium text-slate-400 ml-1 uppercase tracking-wider">Client Secret</label>
-                        <div className="relative group">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={18} />
+                        <div className="relative">
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                             <input
                                 type="password"
-                                className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all text-sm"
-                                placeholder="••••••••••••••••"
+                                className="input-nova pl-12"
+                                placeholder="Client Secret"
                                 value={credentials.clientSecret}
                                 onChange={(e) => setCredentials({ ...credentials, clientSecret: e.target.value })}
                                 required
@@ -71,20 +67,25 @@ const Login = ({ onLogin }) => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-4 rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
+                        className="btn-primary w-full group shadow-2xl shadow-indigo-600/20 disabled:opacity-50"
                     >
-                        {loading ? 'Validando...' : (
+                        {loading ? 'Autenticando...' : (
                             <>
-                                Iniciar Sesión
-                                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                Iniciar Sesión Segura
+                                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                             </>
                         )}
                     </button>
+
+                    <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500 uppercase tracking-widest mt-4">
+                        <ShieldCheck size={12} className="text-emerald-500" />
+                        Conexión Encriptada TLS 1.3
+                    </div>
                 </form>
 
-                <div className="mt-8 text-center">
+                <div className="mt-10 text-center border-t border-white/5 pt-6">
                     <p className="text-xs text-slate-500">
-                        ¿No tienes credenciales? <a href="https://factus.co" target="_blank" className="text-indigo-400 hover:underline">Solicítalas en Factus.co</a>
+                        ¿Requieres acceso? <a href="https://factus.co" target="_blank" className="text-indigo-400 hover:text-indigo-300 font-semibold no-underline transition-colors">Solicitar credenciales</a>
                     </p>
                 </div>
             </div>
