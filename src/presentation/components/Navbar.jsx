@@ -9,7 +9,7 @@ const NavLink = ({ children, active, onClick, disabled }) => (
     <button
         onClick={onClick}
         disabled={disabled}
-        className={`text-sm font-medium transition-all bg-transparent border-none cursor-pointer ${disabled ? 'opacity-30 cursor-not-allowed' : ''} ${active ? 'text-indigo-400 border-b-2 border-indigo-400 pb-1' : 'text-slate-400 hover:text-white pb-1'}`}
+        className={`text-sm font-medium transition-all bg-transparent border-none cursor-pointer p-0 ${disabled ? 'opacity-30 cursor-not-allowed' : ''} ${active ? 'text-indigo-400 border-b-2 border-indigo-400 pb-1' : 'text-slate-400 hover:text-white pb-1'}`}
     >
         {children}
     </button>
