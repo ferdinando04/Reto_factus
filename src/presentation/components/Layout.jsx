@@ -19,8 +19,8 @@ const Layout = ({ children, user, onLogout, setView, currentView }) => {
                 {children}
             </main>
 
-            <footer className="py-8 text-center text-sm text-slate-500 z-10">
-                &copy; 2026 Factus Nova | Enterprise Invoicing Solultion
+            <footer className="py-8 text-center text-sm text-slate-400 z-10">
+                &copy; 2026 Factus Nova | Enterprise Invoicing Solution
             </footer>
         </div>
     );
