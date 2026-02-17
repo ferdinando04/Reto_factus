@@ -8,7 +8,8 @@ import {
     ArrowDownRight,
     Clock,
     Download,
-    Layers
+    Layers,
+    ArrowRight
 } from 'lucide-react';
 
 /**
