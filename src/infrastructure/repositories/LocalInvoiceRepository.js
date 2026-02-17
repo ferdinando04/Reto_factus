@@ -2,7 +2,7 @@
  * Repositorio Local de Facturas
  * Implementa persistencia en localStorage para mantener un historial local.
  */
-export const LocalInvoiceRepository = {
+export const localInvoiceRepository = {
     save(invoiceResult) {
         const history = this.getAll();
         history.push({
@@ -15,6 +15,10 @@ export const LocalInvoiceRepository = {
     getAll() {
         const data = localStorage.getItem('factus_history');
         return data ? JSON.parse(data) : [];
+    },
+
+    findAll() {
+        return this.getAll();
     },
 
     clear() {
