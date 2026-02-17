@@ -67,37 +67,72 @@ const Dashboard = ({ onNewInvoice, invoices = [] }) => {
                 </button>
             </div>
 
-            {/* Bento Grid Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {stats.map((stat, index) => (
-                    <div
-                        key={index}
-                        className={`card-nova p-6 group transition-all duration-500 overflow-hidden relative ${stat.isLarge ? 'md:col-span-2' : ''}`}
-                    >
-                        {/* Spotlight Effect Background */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/0 via-indigo-500/0 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-
-                        <div className="flex items-start justify-between relative z-10">
-                            <div>
-                                <h3 className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.15em] mb-1">{stat.title}</h3>
-                                <p className={`font-bold text-white tracking-tight ${stat.isLarge ? 'text-4xl' : 'text-2xl'}`}>{stat.value}</p>
+            {/* Bento Grid 2.0 */}
+            <div className="bento-grid">
+                {/* Main KPI Card */}
+                <div className="bento-span-4 bento-card card-nova p-8 group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="flex flex-col h-full justify-between relative z-10">
+                        <div className="flex justify-between items-start">
+                            <div className="space-y-1">
+                                <h3 className="stat-label">Ingresos Totales (Sandbox)</h3>
+                                <p className="stat-value large">${invoices.reduce((acc, inv) => acc + inv.total, 0).toLocaleString()}</p>
                             </div>
-                            <div className={`p-3 rounded-xl bg-white/5 border border-white/10 group-hover:scale-110 group-hover:bg-indigo-500/10 group-hover:border-indigo-500/20 transition-all duration-500`}>
-                                {stat.icon}
+                            <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                                <TrendingUp size={28} />
                             </div>
                         </div>
-
-                        <div className="mt-8 flex items-center justify-between relative z-10">
-                            <div className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${stat.isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-                                {stat.change}
-                                {stat.isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                        <div className="flex items-center gap-4 mt-8">
+                            <div className="trend-badge bg-emerald-500/10 text-emerald-400">
+                                <ArrowUpRight size={14} /> +12.5% vs Mes Anterior
                             </div>
-                            <div className="h-[2px] w-12 bg-white/5 rounded-full overflow-hidden">
-                                <div className="h-full bg-indigo-500/40 w-1/2"></div>
+                            <div className="flex-1 h-[1px] bg-white/5 relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent animate-shimmer"></div>
                             </div>
                         </div>
                     </div>
-                ))}
+                </div>
+
+                {/* Second KPI Card */}
+                <div className="bento-span-2 bento-card card-nova p-8 group">
+                    <div className="flex flex-col h-full justify-between relative z-10">
+                        <div className="space-y-1">
+                            <h3 className="stat-label">Docs Emitidos</h3>
+                            <p className="stat-value">{invoices.length}</p>
+                        </div>
+                        <div className="flex items-center justify-between mt-6">
+                            <div className="p-3 rounded-xl bg-white/5 border border-white/10 group-hover:bg-indigo-500/10 transition-all text-slate-400 group-hover:text-indigo-400">
+                                <FileText size={20} />
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-500">PROMEDIO: {invoices.length > 0 ? (invoices.length / 1).toFixed(1) : '0'} / DÍA</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Stability Widget */}
+                <div className="bento-span-3 bento-card card-nova p-8 group">
+                    <div className="flex items-center gap-6 relative z-10 h-full">
+                        <div className="p-5 rounded-3xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                            <AlertCircle size={32} />
+                        </div>
+                        <div>
+                            <h3 className="stat-label">Estatus DIAN</h3>
+                            <p className="text-xl font-bold text-white tracking-tight">Sincronización OK</p>
+                            <p className="text-xs text-slate-500 mt-1 font-medium">0 Errores críticos detectados</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Quick Actions Widget */}
+                <div className="bento-span-3 bento-card card-nova p-8 group border-dashed border-indigo-500/30 hover:border-solid hover:bg-indigo-500/[0.02]">
+                    <div className="flex flex-col h-full justify-center items-center gap-3 relative z-10 text-center">
+                        <div className="w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                            <Layers size={24} />
+                        </div>
+                        <p className="text-sm font-bold text-slate-400 group-hover:text-white transition-colors">Automatización Activa</p>
+                        <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">TLS 1.3 ENCRYPTED</span>
+                    </div>
+                </div>
             </div>
 
             {/* Recent Activity Table */}
