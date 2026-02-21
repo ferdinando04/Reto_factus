@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
-import BillingForm from './components/BillingForm';
-import { authService } from '../infrastructure/services/FactusAuthService';
-import { invoiceService } from '../application/services/InvoiceService';
+import { CustomerForm } from './components/CustomerForm';
+import { InvoiceForm } from './components/InvoiceForm';
+import { authRepository } from '../infrastructure/repositories/AuthRepository';
 import { localInvoiceRepository } from '../infrastructure/repositories/LocalInvoiceRepository';
 
 /**
@@ -15,14 +15,15 @@ import { localInvoiceRepository } from '../infrastructure/repositories/LocalInvo
 function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [user, setUser] = useState(null);
-    const [view, setView] = useState('dashboard'); // 'dashboard' | 'billing-form'
+    const [view, setView] = useState('dashboard'); // 'dashboard' | 'customer-form' | 'invoice-form'
     const [invoices, setInvoices] = useState([]);
 
     useEffect(() => {
         // Cargar sesión y datos locales al iniciar
-        if (authService.isAuthenticated()) {
+        const token = sessionStorage.getItem('factus_access_token');
+        if (token) {
             setIsLoggedIn(true);
-            setUser({ name: 'Fernando Vega', role: 'Administrador' });
+            setUser({ name: 'Admin Factus', role: 'Enterprise' });
             loadInvoices();
         }
     }, []);
@@ -33,35 +34,24 @@ function App() {
     };
 
     const handleLogin = async (credentials) => {
-        // Simulación de login para avance de UI
-        setIsLoggedIn(true);
-        setUser({ name: 'Fernando Vega', role: 'Administrador' });
-        loadInvoices();
-    };
-
-    const handleSendInvoice = async (invoiceData) => {
         try {
-            console.log('Factus Nova: Iniciando proceso de firma y envío...');
-
-            // En una implementación real conectaríamos con invoiceService.sendInvoice(invoiceData)
-            // Para esta fase, simulamos el éxito y guardamos localmente
-            const newInvoice = {
-                number: `SETT${1000 + invoices.length}`,
-                customer_name: invoiceData.customer.name,
-                total: invoiceData.items.reduce((acc, item) => acc + (item.quantity * item.price), 0),
-                date: new Date().toISOString()
-            };
-
-            localInvoiceRepository.save(newInvoice);
+            await authRepository.login(
+                credentials.clientId,
+                credentials.clientSecret,
+                credentials.email,
+                credentials.password
+            );
+            setIsLoggedIn(true);
+            setUser({ name: 'Admin Factus', role: 'Enterprise' });
             loadInvoices();
-            setView('dashboard');
-
-            alert('¡Factura enviada con éxito a la DIAN!');
         } catch (error) {
-            console.error('Error enviando factura:', error);
-            alert('Error en la comunicación con Factus API');
+            alert('Fallo de Autenticación con Factus: Verifique credenciales.');
+            throw error;
         }
     };
+
+    // La lógica de envío ahora está contenida en los propios formularios
+    // InvoiceForm y CustomerForm coordinan sus repsectivos Submit y repositorios.
 
     const handleLogout = () => {
         setIsLoggedIn(false);
@@ -76,38 +66,51 @@ function App() {
         );
     }
 
+    // Componente temporal para vistas en construcción
+    const PlaceholderView = ({ title, icon: Icon, description }) => (
+        <div className="flex flex-col items-center justify-center p-12 text-center h-[60vh]">
+            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-blue-100">
+                <Icon size={32} />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">{title}</h2>
+            <p className="text-slate-500 max-w-md">{description}</p>
+        </div>
+    );
+
     return (
         <Layout user={user} onLogout={handleLogout} setView={setView} currentView={view}>
-            <div className="container py-8">
-                {view === 'dashboard' ? (
-                    <Dashboard
-                        onNewInvoice={() => setView('billing-form')}
-                        invoices={invoices}
+            {view === 'dashboard' ? (
+                <Dashboard
+                    onNewInvoice={() => setView('invoice-form')}
+                    onNewCustomer={() => setView('customer-form')}
+                    setView={setView}
+                    invoices={invoices}
+                />
+            ) : view === 'customer-form' ? (
+                <div className="animate-fade-in w-full">
+                    <CustomerForm />
+                </div>
+            ) : view === 'invoice-form' ? (
+                <div className="animate-fade-in w-full">
+                    <InvoiceForm />
+                </div>
+            ) : view === 'products' ? (
+                <div className="animate-fade-in w-full bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <PlaceholderView
+                        title="Gestión de Productos y Servicios"
+                        description="Este módulo está en construcción. Aquí podrá administrar su catálogo de ítems, precios, impuestos aplicables y códigos estándar de la DIAN."
+                        icon={PackageOpen}
                     />
-                ) : (
-                    <div className="animate-fade-in">
-                        <div className="flex items-center justify-between mb-10 pb-4 border-b border-white/5">
-                            <div>
-                                <h2 className="text-3xl font-bold text-gradient">
-                                    Emisión de Factura
-                                </h2>
-                                <p className="text-slate-500 text-xs uppercase tracking-widest mt-1">Sincronización DIAN Activa</p>
-                            </div>
-                            <button
-                                onClick={() => setView('dashboard')}
-                                className="btn-primary p-3 rounded-xl bg-white/5 hover:bg-white/10 text-xs"
-                            >
-                                ← Panel General
-                            </button>
-                        </div>
-
-                        <BillingForm
-                            onSend={handleSendInvoice}
-                            onCancel={() => setView('dashboard')}
-                        />
-                    </div>
-                )}
-            </div>
+                </div>
+            ) : view === 'credit-notes' ? (
+                <div className="animate-fade-in w-full bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <PlaceholderView
+                        title="Notas Crédito"
+                        description="Este módulo está en construcción. Aquí podrá anular o ajustar facturas electrónicas previamente emitidas ante la DIAN mediante la generación de Notas Crédito."
+                        icon={Receipt}
+                    />
+                </div>
+            ) : null}
         </Layout>
     );
 }

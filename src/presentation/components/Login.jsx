@@ -6,16 +6,24 @@ import { Rocket, Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
  * Implementa la estética "Liquid Glass 2026" con validación de baja fricción.
  */
 const Login = ({ onLogin }) => {
-    const [credentials, setCredentials] = useState({ clientId: '', clientSecret: '' });
+    const [credentials, setCredentials] = useState({
+        clientId: import.meta.env.VITE_FACTUS_CLIENT_ID || '',
+        clientSecret: import.meta.env.VITE_FACTUS_CLIENT_SECRET || '',
+        email: import.meta.env.VITE_FACTUS_EMAIL || '',
+        password: import.meta.env.VITE_FACTUS_PASSWORD || ''
+    });
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setTimeout(() => {
-            onLogin(credentials);
+        try {
+            await onLogin(credentials);
+        } catch (err) {
+            console.error(err);
+        } finally {
             setLoading(false);
-        }, 1500);
+        }
     };
 
     return (
@@ -41,7 +49,7 @@ const Login = ({ onLogin }) => {
                     <div className="space-y-2">
                         <label className="text-xs font-semibold text-slate-500 ml-1 uppercase tracking-widest">Client Credentials</label>
                         <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                            <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                             <input
                                 type="text"
                                 className="input-nova pl-12"
@@ -59,6 +67,28 @@ const Login = ({ onLogin }) => {
                                 placeholder="Client Secret"
                                 value={credentials.clientSecret}
                                 onChange={(e) => setCredentials({ ...credentials, clientSecret: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                            <input
+                                type="email"
+                                className="input-nova pl-12"
+                                placeholder="Correo API Factus"
+                                value={credentials.email}
+                                onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div className="relative">
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                            <input
+                                type="password"
+                                className="input-nova pl-12"
+                                placeholder="Contraseña Sandbox"
+                                value={credentials.password}
+                                onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
                                 required
                             />
                         </div>
