@@ -21,7 +21,7 @@ export class InvoiceRepository {
 
             // Paso C1: Mapeamos los datos al JSON de Factus
             const payload = InvoiceMapper.toFactusPayload(datosFormulario, rangeId);
-            console.log('[InvoiceRepository] Payload construido correctamente.');
+            console.log('[InvoiceRepository] Payload completo:', JSON.stringify(payload, null, 2));
 
             // Paso C2: Enviamos a /v1/bills/validate
             const response = await axiosClient.post('/v1/bills/validate', payload);
@@ -30,18 +30,39 @@ export class InvoiceRepository {
             return response.data || response;
 
         } catch (error) {
-            console.error('[InvoiceRepository] Error Grave en emisión:', error.response?.data || error.message);
+            console.error('[InvoiceRepository] Error completo:', error);
+            console.error('[InvoiceRepository] Response data:', error.response?.data);
 
-            // Extracción amigable de errores para la vista
+            // Extraer TODOS los detalles del error
             let errorMessage = 'Ocurrió un error inesperado al validar ante la DIAN.';
-            if (error.response?.data?.message) {
-                errorMessage = error.response.data.message;
-            } else if (error.response?.data?.errors) {
-                // Factus a veces responde con hash de errores de validación
-                errorMessage = JSON.stringify(error.response.data.errors);
+            let fieldErrors = null;
+            const statusCode = error.response?.status || null;
+
+            // El axiosClient interceptor ya desenvuelve response.data en success
+            // Pero en error, error.response.data contiene el body raw
+            const apiData = error.response?.data;
+
+            if (apiData) {
+                // Mensaje principal
+                if (apiData.message) {
+                    errorMessage = apiData.message;
+                }
+                // Errores por campo de validación
+                if (apiData.errors && typeof apiData.errors === 'object') {
+                    fieldErrors = apiData.errors;
+                }
+            } else if (error.message) {
+                errorMessage = error.message;
             }
 
-            throw new Error(errorMessage);
+            // Enriquecer el error para que el modal lo muestre correctamente
+            const enrichedError = new Error(errorMessage);
+            enrichedError.details = {
+                message: errorMessage,
+                errors: fieldErrors,
+                statusCode: statusCode
+            };
+            throw enrichedError;
         }
     }
 }

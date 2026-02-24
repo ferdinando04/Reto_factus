@@ -1,247 +1,360 @@
 import React, { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, Send, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { FileText, Send, Loader2, Plus, Trash2, CheckCircle2, AlertCircle, X, AlertTriangle, Download, Mail, Eye } from 'lucide-react';
 import { invoiceRepository } from '../../infrastructure/repositories/InvoiceRepository';
+import { axiosClient } from '../../infrastructure/http/axiosClient';
 
+/* ─── Error Modal ─── */
+const ErrorModal = ({ error, onClose }) => {
+    if (!error) return null;
+    const details = error.details || {};
+    const fieldErrors = details.errors || {};
+    const hasFieldErrors = Object.keys(fieldErrors).length > 0;
+
+    return (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={onClose}>
+            <div className="card-factus animate-fade-in" style={{ maxWidth: '560px', width: '100%', maxHeight: '80vh', overflow: 'auto' }} onClick={e => e.stopPropagation()}>
+                <div style={{ padding: '20px 24px', borderBottom: '1px solid #FFCDD2', background: '#FFEBEE', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#FF5252', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <AlertTriangle size={20} color="#fff" />
+                        </div>
+                        <div>
+                            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#1C1C1C' }}>Error al Emitir Factura</h3>
+                            {details.statusCode && <span style={{ fontSize: '12px', color: '#FF5252', fontWeight: 600 }}>Código HTTP: {details.statusCode}</span>}
+                        </div>
+                    </div>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#6B6B6B', cursor: 'pointer' }}><X size={20} /></button>
+                </div>
+                <div style={{ padding: '20px 24px' }}>
+                    <div style={{ background: '#FFF3E0', borderRadius: '8px', padding: '14px 16px', marginBottom: '16px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                        <AlertCircle size={18} color="#B36B00" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <p style={{ fontSize: '14px', color: '#7A4A00', lineHeight: 1.5 }}>{details.message || error.message}</p>
+                    </div>
+                    {hasFieldErrors ? (
+                        <div>
+                            <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#1C1C1C', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Errores de Validación</h4>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {Object.entries(fieldErrors).map(([field, msgs]) => (
+                                    <div key={field} style={{ background: '#FAFAFA', border: '1px solid #E6E6E6', borderRadius: '8px', padding: '12px 14px' }}>
+                                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#FF5252', marginBottom: '4px', fontFamily: 'monospace' }}>📌 {field}</div>
+                                        {(Array.isArray(msgs) ? msgs : [msgs]).map((m, i) => (
+                                            <div key={i} style={{ fontSize: '13px', color: '#6B6B6B', paddingLeft: '20px' }}>• {m}</div>
+                                        ))}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div style={{ background: '#FAFAFA', borderRadius: '8px', padding: '16px', border: '1px solid #E6E6E6' }}>
+                            <h4 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '8px' }}>¿Cómo solucionarlo?</h4>
+                            <ul style={{ fontSize: '13px', color: '#6B6B6B', lineHeight: 1.8, paddingLeft: '20px' }}>
+                                <li>Verifique el <strong>Documento (NIT/CC)</strong></li>
+                                <li>Incluya <strong>Razón Social</strong> y <strong>Dirección</strong></li>
+                                <li><strong>Municipio:</strong> 169=Bogotá, 80=Medellín, 1079=Cali</li>
+                                <li>Cada ítem: <strong>nombre, cantidad y precio</strong></li>
+                            </ul>
+                        </div>
+                    )}
+                </div>
+                <div style={{ padding: '16px 24px', borderTop: '1px solid #E6E6E6', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button onClick={onClose} className="btn-primary">Entendido, Corregir Datos</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+/* ─── Success Modal (PDF / Email / Detalle) ─── */
+const SuccessModal = ({ data, onClose, onDownloadPDF, onSendEmail, loadingAction }) => {
+    if (!data) return null;
+    return (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', overflowY: 'auto' }}>
+            <div className="card-factus animate-fade-in" style={{ maxWidth: '520px', width: '100%', margin: 'auto' }} onClick={e => e.stopPropagation()}>
+                <div style={{ padding: '32px 24px 16px', textAlign: 'center' }}>
+                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                        <CheckCircle2 size={28} color="#00C853" />
+                    </div>
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1C1C1C', marginBottom: '6px' }}>¡Factura Emitida Exitosamente!</h3>
+                    <p style={{ fontSize: '14px', color: '#6B6B6B', lineHeight: 1.5 }}>
+                        Factura <strong>#{data.billNumber}</strong> certificada ante la DIAN.
+                    </p>
+                    <span className="badge badge-success" style={{ fontSize: '12px', padding: '5px 12px', marginTop: '10px', display: 'inline-block' }}>
+                        Certificada por la DIAN ✓
+                    </span>
+                </div>
+
+                {/* Resumen */}
+                <div style={{ margin: '0 20px', padding: '14px', background: '#F5F9FF', borderRadius: '10px', border: '1px solid #E0ECFF' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px' }}>
+                        <div><span style={{ color: '#9A9A9A', display: 'block', marginBottom: '2px' }}>Número</span><strong>{data.billNumber}</strong></div>
+                        <div><span style={{ color: '#9A9A9A', display: 'block', marginBottom: '2px' }}>Referencia</span><strong>{data.referenceCode || '—'}</strong></div>
+                        <div><span style={{ color: '#9A9A9A', display: 'block', marginBottom: '2px' }}>Cliente</span><strong>{data.customerName || '—'}</strong></div>
+                        <div><span style={{ color: '#9A9A9A', display: 'block', marginBottom: '2px' }}>Total</span><strong style={{ color: '#FF6C37' }}>${data.total ? Number(data.total).toLocaleString() : '—'} COP</strong></div>
+                    </div>
+                </div>
+
+                {/* Botones de acción */}
+                <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <button onClick={onDownloadPDF} disabled={loadingAction === 'pdf'}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', borderRadius: '10px', border: 'none', cursor: 'pointer', background: '#FF6C37', color: '#fff', fontWeight: 700, fontSize: '14px', opacity: loadingAction === 'pdf' ? 0.7 : 1 }}>
+                        {loadingAction === 'pdf' ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                        Descargar PDF de Factura
+                    </button>
+
+                    <button onClick={onSendEmail} disabled={loadingAction === 'email'}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', borderRadius: '10px', border: '2px solid #FF6C37', cursor: 'pointer', background: '#FFF3EE', color: '#FF6C37', fontWeight: 700, fontSize: '14px', opacity: loadingAction === 'email' ? 0.7 : 1 }}>
+                        {loadingAction === 'email' ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />}
+                        Enviar PDF por Correo
+                    </button>
+
+                    <a href={`https://app-sandbox.factus.com.co/documents/bills`} target="_blank" rel="noopener noreferrer"
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', borderRadius: '10px', border: '1px solid #E6E6E6', cursor: 'pointer', background: '#FAFAFA', color: '#6B6B6B', fontWeight: 600, fontSize: '14px', textDecoration: 'none' }}>
+                        <Eye size={16} /> Ver en Portal Factus
+                    </a>
+                </div>
+
+                <div style={{ padding: '0 20px 16px', textAlign: 'center' }}>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#9A9A9A', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}>
+                        Cerrar y emitir otra factura
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+/* ─── Invoice Form ─── */
 export const InvoiceForm = () => {
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitStatus, setSubmitStatus] = useState(null); // 'idle', 'success', 'error'
-    const [errorMessage, setErrorMessage] = useState('');
-
-    const { register, control, handleSubmit, watch, formState: { errors } } = useForm({
+    const { register, handleSubmit, control, watch, formState: { errors }, reset } = useForm({
         defaultValues: {
             customer_identification: '',
             customer_names: '',
             customer_email: '',
             customer_phone: '',
-            items: [
-                { code_reference: 'SERV-001', name: '', quantity: 1, price: 0 }
-            ]
+            customer_address: '',
+            customer_municipality_id: 169, // 169 = Bogotá D.C.
+            items: [{ name: '', code_reference: 'SRV001', quantity: 1, price: 0 }]
         }
     });
+    const { fields, append, remove } = useFieldArray({ control, name: 'items' });
+    const [loading, setLoading] = useState(false);
+    const [errorModal, setErrorModal] = useState(null);
+    const [successData, setSuccessData] = useState(null);
+    const [loadingAction, setLoadingAction] = useState(null);
+    const watchItems = watch('items');
 
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: "items"
-    });
-
-    // Calcular Subtotal interactivo para mejor UX
-    const watchItems = watch("items");
-    const totalAmount = watchItems.reduce((acc, item) => acc + (Number(item.quantity) * Number(item.price)), 0);
+    const calculateTotal = () => (watchItems || []).reduce((sum, item) => sum + ((item.quantity || 0) * (item.price || 0)), 0);
 
     const onSubmit = async (data) => {
-        setIsSubmitting(true);
-        setSubmitStatus('idle');
-        setErrorMessage('');
-
+        setLoading(true);
+        setErrorModal(null);
+        setSuccessData(null);
         try {
-            await invoiceRepository.emitirFactura(data);
-            setSubmitStatus('success');
-            // Opcional: Podríamos hacer un reset() del form aquí si lo deamos
+            const response = await invoiceRepository.emitirFactura(data);
+            const bill = response?.bill || response?.data?.bill || {};
+            setSuccessData({
+                billNumber: bill.number || 'N/A',
+                referenceCode: bill.reference_code || '',
+                customerName: data.customer_names,
+                customerEmail: data.customer_email,
+                total: calculateTotal(),
+                fullResponse: response
+            });
         } catch (error) {
-            setSubmitStatus('error');
-            setErrorMessage(error.message);
+            setErrorModal(error);
         } finally {
-            setIsSubmitting(false);
+            setLoading(false);
         }
     };
 
+    const handleDownloadPDF = async () => {
+        if (!successData?.billNumber || successData.billNumber === 'N/A') return;
+        setLoadingAction('pdf');
+        try {
+            const response = await axiosClient.get(`/v1/bills/download-pdf/${successData.billNumber}`);
+            // Factus devuelve el PDF en base64 dentro del campo "pdf_base_64_encoded"
+            const pdfB64 = response?.data?.pdf_base_64_encoded || response?.pdf_base_64_encoded;
+            if (pdfB64) {
+                const byteCharacters = atob(pdfB64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                // Abrir en nueva pestaña para ver e imprimir
+                window.open(url, '_blank');
+            } else {
+                // Si no hay base64, abrir en el portal
+                window.open(`https://app-sandbox.factus.com.co/documents/bills`, '_blank');
+            }
+        } catch (error) {
+            console.error('[PDF] Error:', error);
+            // Fallback: intentar con /show/ endpoint
+            try {
+                const res2 = await axiosClient.get(`/v1/bills/show/${successData.billNumber}`);
+                const bill2 = res2?.data?.bill || res2?.bill || {};
+                if (bill2.public_url) {
+                    window.open(bill2.public_url, '_blank');
+                } else {
+                    window.open(`https://app-sandbox.factus.com.co/documents/bills`, '_blank');
+                }
+            } catch {
+                window.open(`https://app-sandbox.factus.com.co/documents/bills`, '_blank');
+            }
+        } finally {
+            setLoadingAction(null);
+        }
+    };
+
+    const handleSendEmail = async () => {
+        if (!successData?.billNumber) return;
+        setLoadingAction('email');
+        try {
+            // Intentar enviar por la API de Factus
+            await axiosClient.post(`/v1/bills/send-email`, {
+                number: successData.billNumber,
+                email: successData.customerEmail
+            });
+            alert(`✅ PDF enviado exitosamente al correo ${successData.customerEmail}.`);
+        } catch (error) {
+            console.error('[Email] Error:', error);
+            // En sandbox, el envío puede no estar disponible
+            alert(`⚠️ El envío por correo no está disponible en el Sandbox de Factus.\n\nPuedes descargar el PDF y enviarlo manualmente a ${successData.customerEmail}.`);
+        } finally {
+            setLoadingAction(null);
+        }
+    };
+
+    const handleCloseSuccess = () => {
+        setSuccessData(null);
+        reset();
+    };
+
     return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.98, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8"
-        >
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="px-8 pt-8 pb-6 border-b border-slate-100 bg-slate-50/50">
-                    <h2 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-3">
-                        <FileText size={24} className="text-blue-600" />
-                        Emisión de Factura
-                    </h2>
-                    <p className="text-slate-500 mt-1 text-sm font-medium ml-9">Defina el cliente y añada los productos a facturar electrónicamente.</p>
+        <div className="animate-fade-in" style={{ maxWidth: '780px', margin: '0 auto', padding: '0 12px' }}>
+            <ErrorModal error={errorModal} onClose={() => setErrorModal(null)} />
+            <SuccessModal data={successData} onClose={handleCloseSuccess} onDownloadPDF={handleDownloadPDF} onSendEmail={handleSendEmail} loadingAction={loadingAction} />
+
+            {/* Header */}
+            <div style={{ marginBottom: '24px' }}>
+                <h1 style={{ fontSize: 'clamp(18px, 4vw, 22px)', fontWeight: 700, color: '#1C1C1C', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                    <FileText size={22} color="#FF6C37" />
+                    Comprobante Electrónico de Facturación
+                </h1>
+                <p style={{ fontSize: '14px', color: '#6B6B6B' }}>Complete los datos del receptor y añada los conceptos a facturar.</p>
+            </div>
+
+            <form onSubmit={handleSubmit(onSubmit)}>
+                {/* Section 1: Receptor */}
+                <div className="card-factus" style={{ marginBottom: '20px' }}>
+                    <div style={{ padding: '20px 24px', borderBottom: '1px solid #E6E6E6', background: '#FAFAFA' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '50%', background: '#FFF3EE', color: '#FF6C37', fontSize: '13px', fontWeight: 700 }}>1</span>
+                            <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#1C1C1C' }}>Datos del Receptor</h3>
+                        </div>
+                    </div>
+                    <div style={{ padding: '20px 24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                        <div>
+                            <label className="input-label">Documento (NIT / CC) *</label>
+                            <input className="input-factus" placeholder="Ej: 900123456" {...register('customer_identification', { required: 'Requerido' })} style={errors.customer_identification ? { borderColor: '#FF5252' } : {}} />
+                            {errors.customer_identification && <p style={{ color: '#FF5252', fontSize: '12px', marginTop: '4px' }}>{errors.customer_identification.message}</p>}
+                        </div>
+                        <div>
+                            <label className="input-label">Razón Social / Nombre *</label>
+                            <input className="input-factus" placeholder="Nombre del cliente" {...register('customer_names', { required: 'Requerido' })} style={errors.customer_names ? { borderColor: '#FF5252' } : {}} />
+                        </div>
+                        <div>
+                            <label className="input-label">Correo Electrónico</label>
+                            <input type="email" className="input-factus" placeholder="correo@empresa.com" {...register('customer_email')} />
+                        </div>
+                        <div>
+                            <label className="input-label">Teléfono</label>
+                            <input className="input-factus" placeholder="3001234567" {...register('customer_phone')} />
+                        </div>
+                        <div>
+                            <label className="input-label">Dirección *</label>
+                            <input className="input-factus" placeholder="Calle 100 #15-20" {...register('customer_address', { required: 'Requerido' })} />
+                        </div>
+                        <div>
+                            <label className="input-label">Municipio (ID Factus)</label>
+                            <select className="input-factus" {...register('customer_municipality_id', { valueAsNumber: true })} style={{ height: '44px' }}>
+                                <option value={169}>Bogotá D.C.</option>
+                                <option value={80}>Medellín</option>
+                                <option value={1079}>Cali</option>
+                                <option value={88}>Barranquilla</option>
+                                <option value={318}>Cartagena</option>
+                                <option value={238}>Bucaramanga</option>
+                                <option value={885}>Pereira</option>
+                                <option value={622}>Manizales</option>
+                                <option value={448}>Ibagué</option>
+                                <option value={792}>Pasto</option>
+                                <option value={1061}>Villavicencio</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-10">
-                    {/* -- Sección 1: Datos del Cliente -- */}
-                    <div className="space-y-5">
-                        <div className="flex items-center gap-3">
-                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">1</span>
-                            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-widest">Datos del Receptor</h3>
+                {/* Section 2: Items */}
+                <div className="card-factus" style={{ marginBottom: '20px' }}>
+                    <div style={{ padding: '16px 24px', borderBottom: '1px solid #E6E6E6', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', background: '#FAFAFA' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '50%', background: '#FFF3EE', color: '#FF6C37', fontSize: '13px', fontWeight: 700 }}>2</span>
+                            <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#1C1C1C' }}>Líneas de Factura</h3>
                         </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50 border border-slate-200 rounded-xl">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-600 mb-2">Documento (NIT/CC)</label>
-                                <input
-                                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm"
-                                    placeholder="Ej: 900123456"
-                                    {...register('customer_identification', { required: true })}
-                                />
-                                {errors.customer_identification && <span className="text-rose-500 text-xs mt-1.5 ml-1 block font-medium">Documento requerido</span>}
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-600 mb-2">Razón Social / Nombre Completo</label>
-                                <input
-                                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm"
-                                    placeholder="Ej: Halltec SAS"
-                                    {...register('customer_names', { required: true })}
-                                />
-                                {errors.customer_names && <span className="text-rose-500 text-xs mt-1.5 ml-1 block font-medium">Nombre requerido</span>}
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-600 mb-2">Correo Electrónico</label>
-                                <input
-                                    type="email"
-                                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm"
-                                    placeholder="facturacion@empresa.com"
-                                    {...register('customer_email', { required: true })}
-                                />
-                                {errors.customer_email && <span className="text-rose-500 text-xs mt-1.5 ml-1 block font-medium">Email requerido</span>}
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-600 mb-2">Teléfono Móvil / Fijo</label>
-                                <input
-                                    type="tel"
-                                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all shadow-sm"
-                                    placeholder="3001234567"
-                                    {...register('customer_phone')}
-                                />
-                            </div>
-                        </div>
+                        <button type="button" onClick={() => append({ name: '', code_reference: `SRV${String(fields.length + 1).padStart(3, '0')}`, quantity: 1, price: 0 })} className="btn-secondary" style={{ fontSize: '13px', padding: '8px 14px' }}>
+                            <Plus size={14} /> Añadir Ítem
+                        </button>
                     </div>
-
-                    {/* -- Sección 2: Productos / Servicios -- */}
-                    <div className="space-y-5">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">2</span>
-                                <h3 className="text-sm font-bold text-slate-700 uppercase tracking-widest">Líneas de Factura</h3>
+                    <div style={{ padding: '14px 24px' }}>
+                        {fields.length === 0 ? (
+                            <div style={{ border: '2px dashed #E6E6E6', borderRadius: '10px', padding: '32px', textAlign: 'center', color: '#9A9A9A', fontSize: '14px' }}>
+                                <FileText size={24} color="#E6E6E6" style={{ margin: '0 auto 6px', display: 'block' }} />
+                                No hay conceptos. Añade al menos uno.
                             </div>
-
-                            <button
-                                type="button"
-                                onClick={() => append({ code_reference: `ITEM-${fields.length + 1}`, name: '', quantity: 1, price: 0 })}
-                                className="flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors bg-white hover:bg-slate-50 border border-slate-200 shadow-sm px-4 py-2 rounded-lg"
-                            >
-                                <Plus size={16} /> Añadir Fila
-                            </button>
-                        </div>
-
-                        <div className="space-y-3">
-                            <AnimatePresence>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                 {fields.map((field, index) => (
-                                    <motion.div
-                                        key={field.id}
-                                        initial={{ opacity: 0, height: 0, scale: 0.98 }}
-                                        animate={{ opacity: 1, height: 'auto', scale: 1 }}
-                                        exit={{ opacity: 0, height: 0, scale: 0.98 }}
-                                        transition={{ duration: 0.2 }}
-                                        className="grid grid-cols-12 gap-4 items-start bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-slate-300 transition-colors"
-                                    >
-                                        <div className="col-span-12 md:col-span-5 relative">
-                                            <input
-                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                                                placeholder="Descripción del concepto"
-                                                {...register(`items.${index}.name`, { required: true })}
-                                            />
+                                    <div key={field.id} style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', padding: '14px', background: '#FAFAFA', borderRadius: '10px', border: '1px solid #E6E6E6', flexWrap: 'wrap' }}>
+                                        <div style={{ flex: '3 1 180px', minWidth: '180px' }}>
+                                            <label className="input-label">Descripción *</label>
+                                            <input className="input-factus" placeholder="Producto o servicio..." {...register(`items.${index}.name`, { required: true })} />
                                         </div>
-                                        <div className="col-span-4 md:col-span-2 relative">
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                className="w-full pl-4 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                                                placeholder="Cant."
-                                                {...register(`items.${index}.quantity`, { required: true, valueAsNumber: true })}
-                                            />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold uppercase pointer-events-none">UND</span>
+                                        <div style={{ flex: '1 1 80px', minWidth: '80px' }}>
+                                            <label className="input-label">Cant.</label>
+                                            <input type="number" className="input-factus" min="1" {...register(`items.${index}.quantity`, { valueAsNumber: true })} />
                                         </div>
-                                        <div className="col-span-6 md:col-span-4 relative flex items-center">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold pointer-events-none text-sm">$</span>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                className="w-full pl-8 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                                                placeholder="Precio Unit."
-                                                {...register(`items.${index}.price`, { required: true, valueAsNumber: true })}
-                                            />
+                                        <div style={{ flex: '1.5 1 110px', minWidth: '110px' }}>
+                                            <label className="input-label">$ Precio Unit.</label>
+                                            <input type="number" className="input-factus" min="0" {...register(`items.${index}.price`, { valueAsNumber: true })} />
                                         </div>
-                                        <div className="col-span-2 md:col-span-1 flex justify-end items-center h-[38px]">
-                                            <button
-                                                type="button"
-                                                onClick={() => remove(index)}
-                                                className="p-2 text-slate-400 hover:text-rose-600 transition-colors rounded-lg hover:bg-rose-50"
-                                                title="Eliminar ítem"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </motion.div>
+                                        <button type="button" onClick={() => remove(index)} style={{ background: 'none', border: 'none', color: '#FF5252', cursor: 'pointer', padding: '8px', borderRadius: '8px', flexShrink: 0 }}>
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 ))}
-                            </AnimatePresence>
+                            </div>
+                        )}
+                    </div>
+                </div>
 
-                            {fields.length === 0 && (
-                                <div className="text-center py-10 bg-slate-50 border border-dashed border-slate-300 rounded-xl">
-                                    <p className="text-slate-500 text-sm font-medium">No hay conceptos en la factura. Añade al menos uno para continuar.</p>
-                                </div>
-                            )}
+                {/* Section 3: Summary + Submit */}
+                <div className="card-factus" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 24px', flexWrap: 'wrap', gap: '14px' }}>
+                    <div>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#9A9A9A', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Total Estimado</div>
+                        <div style={{ fontSize: 'clamp(22px, 5vw, 28px)', fontWeight: 800, color: '#1C1C1C' }}>
+                            ${calculateTotal().toLocaleString()} <span style={{ fontSize: '14px', fontWeight: 500, color: '#6B6B6B' }}>COP</span>
                         </div>
                     </div>
-
-                    {/* -- Resumen y Acciones Finales -- */}
-                    <div className="bg-slate-50 p-6 md:p-8 rounded-xl border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
-
-                        <div className="text-center md:text-left">
-                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Total Estimado</p>
-                            <p className="text-4xl md:text-5xl font-black text-slate-800 tracking-tight">
-                                ${totalAmount.toLocaleString('es-CO')}
-                                <span className="text-sm font-bold text-slate-400 ml-2 tracking-normal">COP</span>
-                            </p>
-                        </div>
-
-                        <div className="flex flex-col items-center md:items-end gap-4 w-full md:w-auto">
-                            {submitStatus === 'error' && (
-                                <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-2 text-rose-600 bg-rose-50 border border-rose-200 px-4 py-2.5 rounded-lg text-sm w-full md:w-auto max-w-md">
-                                    <AlertCircle size={20} className="shrink-0" />
-                                    <span className="font-medium">{errorMessage}</span>
-                                </motion.div>
-                            )}
-
-                            {submitStatus === 'success' && (
-                                <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-2.5 rounded-lg text-sm w-full md:w-auto">
-                                    <CheckCircle2 size={20} className="shrink-0" />
-                                    <span className="font-bold">Factura Emitida a la DIAN Exitosamente</span>
-                                </motion.div>
-                            )}
-
-                            <button
-                                type="submit"
-                                disabled={isSubmitting || fields.length === 0}
-                                className={`
-                                    w-full md:w-auto px-8 py-3.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-sm
-                                    ${isSubmitting || fields.length === 0
-                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed border-transparent'
-                                        : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:shadow-md'
-                                    }
-                                `}
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <Loader2 className="animate-spin text-blue-200" size={20} />
-                                        <span>Transmitiendo...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Send size={20} />
-                                        <span>Emitir Factura Electrónica</span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </motion.div>
+                    <button type="submit" disabled={loading} className="btn-primary" style={{ padding: '14px 24px', fontSize: '14px', whiteSpace: 'nowrap' }}>
+                        {loading ? <><Loader2 size={16} className="animate-spin" /> Emitiendo...</> : <><Send size={16} /> Emitir Factura Electrónica</>}
+                    </button>
+                </div>
+            </form>
+        </div>
     );
 };
+
+export default InvoiceForm;

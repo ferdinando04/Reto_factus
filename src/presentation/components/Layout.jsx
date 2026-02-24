@@ -1,64 +1,92 @@
 import React, { useState } from 'react';
 import {
-    LayoutDashboard,
-    Users,
-    PackageOpen,
-    FileText,
-    Receipt,
-    Settings,
-    LogOut,
-    Bell,
-    Search,
-    ChevronRight,
-    Menu,
-    X
+    LayoutDashboard, Users, PackageOpen, FileText, Receipt,
+    Settings, LogOut, Bell, Search, Menu, X, Rocket, ChevronRight
 } from 'lucide-react';
 
+const navItems = [
+    { id: 'dashboard', label: 'Panel de Control', icon: LayoutDashboard },
+    { id: 'invoice-form', label: 'Facturación Electrónica', icon: FileText },
+    { id: 'customer-form', label: 'Clientes', icon: Users },
+    { id: 'products', label: 'Productos', icon: PackageOpen },
+    { id: 'credit-notes', label: 'Notas Crédito', icon: Receipt },
+];
+
 const Layout = ({ children, user, onLogout, setView, currentView }) => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-    const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-
-    const navItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'customer-form', label: 'Clientes', icon: Users },
-        { id: 'products', label: 'Productos / Servicios', icon: PackageOpen },
-        { id: 'invoice-form', label: 'Facturación Electrónica', icon: FileText },
-        { id: 'credit-notes', label: 'Notas Crédito', icon: Receipt },
-    ];
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
-            {/* Sidebar Overlay for Mobile */}
-            {isSidebarOpen && (
+        <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', fontFamily: "'Inter', sans-serif" }}>
+
+            {/* Mobile overlay */}
+            {sidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-slate-900/50 z-40 lg:hidden backdrop-blur-sm"
-                    onClick={toggleSidebar}
-                ></div>
+                    onClick={() => setSidebarOpen(false)}
+                    style={{
+                        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+                        zIndex: 40, display: 'block'
+                    }}
+                    className="sidebar-overlay"
+                />
             )}
 
             {/* Sidebar */}
-            <aside className={`
-                fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 
-                transform transition-transform duration-300 ease-in-out flex flex-col
-                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-            `}>
-                {/* Logo Area */}
-                <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl">
-                            F
+            <aside
+                className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}
+                style={{
+                    width: '260px',
+                    background: '#1C1C1C',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flexShrink: 0,
+                    height: '100vh',
+                    position: 'fixed',
+                    left: sidebarOpen ? 0 : '-260px',
+                    top: 0,
+                    zIndex: 50,
+                    transition: 'left 0.3s ease'
+                }}
+            >
+                {/* Logo */}
+                <div style={{
+                    padding: '20px 20px 16px',
+                    borderBottom: '1px solid #2D2D2D',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                            width: '36px', height: '36px', borderRadius: '10px',
+                            background: '#FF6C37', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                            <Rocket size={20} color="#fff" />
                         </div>
-                        <span className="font-bold text-lg tracking-tight text-slate-900">Factus Nova</span>
+                        <span style={{ color: '#fff', fontSize: '17px', fontWeight: 700, letterSpacing: '-0.01em' }}>
+                            Factus Nova
+                        </span>
                     </div>
-                    <button onClick={toggleSidebar} className="lg:hidden text-slate-400 hover:text-slate-600">
+                    <button
+                        onClick={() => setSidebarOpen(false)}
+                        className="sidebar-close-btn"
+                        style={{
+                            background: 'none', border: 'none', color: '#9A9A9A',
+                            cursor: 'pointer', padding: '4px', display: 'none'
+                        }}
+                    >
                         <X size={20} />
                     </button>
                 </div>
 
-                {/* Navigation Menu */}
-                <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
-                    <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Módulos Principales</p>
+                {/* Navigation */}
+                <nav style={{ flex: 1, padding: '16px 12px', overflowY: 'auto' }}>
+                    <div style={{
+                        fontSize: '10px', fontWeight: 700, color: '#6B6B6B',
+                        textTransform: 'uppercase', letterSpacing: '0.12em',
+                        padding: '0 8px', marginBottom: '12px'
+                    }}>
+                        Menú Principal
+                    </div>
 
                     {navItems.map((item) => {
                         const Icon = item.icon;
@@ -66,92 +94,181 @@ const Layout = ({ children, user, onLogout, setView, currentView }) => {
                         return (
                             <button
                                 key={item.id}
-                                onClick={() => { setView(item.id); setIsSidebarOpen(false); }}
-                                className={`
-                                    w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                                    ${isActive
-                                        ? 'bg-blue-50 text-blue-700'
-                                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                                    }
-                                `}
+                                onClick={() => { setView(item.id); setSidebarOpen(false); }}
+                                style={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    gap: '10px',
+                                    padding: '10px 12px',
+                                    marginBottom: '2px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: isActive ? 600 : 400,
+                                    color: isActive ? '#FFFFFF' : '#9A9A9A',
+                                    background: isActive ? '#2D2D2D' : 'transparent',
+                                    borderLeft: isActive ? '3px solid #FF6C37' : '3px solid transparent',
+                                    transition: 'all 0.15s ease',
+                                    textAlign: 'left'
+                                }}
                             >
-                                <div className="flex items-center gap-3">
-                                    <Icon size={18} className={isActive ? 'text-blue-600' : 'text-slate-400'} />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <Icon size={18} color={isActive ? '#FF6C37' : '#6B6B6B'} />
                                     {item.label}
                                 </div>
-                                {isActive && <ChevronRight size={16} className="text-blue-500" />}
+                                {isActive && <ChevronRight size={14} color="#FF6C37" />}
                             </button>
                         );
                     })}
                 </nav>
 
-                {/* Bottom Settings & User */}
-                <div className="p-4 border-t border-slate-100 space-y-2">
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
-                        <Settings size={18} className="text-slate-400" />
-                        Configuración API
+                {/* Bottom */}
+                <div style={{ padding: '12px', borderTop: '1px solid #2D2D2D' }}>
+                    <button
+                        style={{
+                            width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+                            padding: '10px 12px', borderRadius: '8px', border: 'none',
+                            background: 'transparent', color: '#9A9A9A', cursor: 'pointer',
+                            fontSize: '14px', textAlign: 'left', marginBottom: '4px'
+                        }}
+                    >
+                        <Settings size={18} color="#6B6B6B" />
+                        Configuración
                     </button>
+
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '10px 12px', borderRadius: '8px', background: '#2D2D2D',
+                        marginBottom: '8px'
+                    }}>
+                        <div style={{
+                            width: '32px', height: '32px', borderRadius: '50%',
+                            background: '#FF6C37', display: 'flex', alignItems: 'center',
+                            justifyContent: 'center', color: '#fff', fontSize: '13px', fontWeight: 700, flexShrink: 0
+                        }}>
+                            {user?.name ? user.name.charAt(0) : 'A'}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ color: '#fff', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {user?.name || 'Administrador'}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: '#9A9A9A' }}>
+                                <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#00C853' }}></span>
+                                Sandbox
+                            </div>
+                        </div>
+                    </div>
+
                     <button
                         onClick={onLogout}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors"
+                        style={{
+                            width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+                            padding: '10px 12px', borderRadius: '8px', border: 'none',
+                            background: 'transparent', color: '#FF5252', cursor: 'pointer',
+                            fontSize: '13px', fontWeight: 600, textAlign: 'left'
+                        }}
                     >
-                        <LogOut size={18} className="text-rose-400" />
+                        <LogOut size={16} />
                         Cerrar Sesión
                     </button>
                 </div>
             </aside>
 
-            {/* Main Content Wrapper */}
-            <div className="flex-1 flex flex-col h-screen overflow-hidden">
+            {/* Main wrapper */}
+            <div className="main-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
                 {/* Topbar */}
-                <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 z-30 shrink-0">
-                    <div className="flex items-center gap-4">
-                        <button onClick={toggleSidebar} className="lg:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
-                            <Menu size={20} />
+                <header style={{
+                    height: '56px', background: '#FFFFFF', borderBottom: '1px solid #E6E6E6',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '0 20px', flexShrink: 0
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <button
+                            onClick={() => setSidebarOpen(true)}
+                            className="hamburger-btn"
+                            style={{
+                                background: 'none', border: 'none', color: '#6B6B6B',
+                                cursor: 'pointer', padding: '4px', display: 'block'
+                            }}
+                        >
+                            <Menu size={22} />
                         </button>
 
-                        {/* Search Bar (Simulated SaaS Feature) */}
-                        <div className="hidden md:flex relative w-64">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        {/* Search */}
+                        <div className="topbar-search" style={{ position: 'relative', width: '280px' }}>
+                            <Search size={15} color="#9A9A9A" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                             <input
                                 type="text"
                                 placeholder="Buscar facturas, clientes..."
-                                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                className="input-factus"
+                                style={{ paddingLeft: '36px', height: '36px', fontSize: '13px' }}
                             />
                         </div>
                     </div>
 
-                    {/* Right utilities */}
-                    <div className="flex items-center gap-4">
-                        <button className="relative p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <button style={{
+                            position: 'relative', background: 'none', border: 'none',
+                            color: '#6B6B6B', cursor: 'pointer', padding: '4px'
+                        }}>
                             <Bell size={20} />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border border-white"></span>
+                            <span style={{
+                                position: 'absolute', top: '2px', right: '2px', width: '7px', height: '7px',
+                                borderRadius: '50%', background: '#FF5252', border: '1.5px solid #fff'
+                            }}></span>
                         </button>
-                        <div className="h-6 w-px bg-slate-200"></div>
-                        <div className="flex items-center gap-3">
-                            <div className="text-right hidden sm:block">
-                                <p className="text-sm font-bold text-slate-700">{user?.name || 'Administrador'}</p>
-                                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center justify-end gap-1">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                    Sandbox Conectado
-                                </p>
-                            </div>
-                            <div className="w-9 h-9 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 font-bold overflow-hidden shadow-sm">
+
+                        <div className="topbar-user" style={{
+                            display: 'flex', alignItems: 'center', gap: '8px'
+                        }}>
+                            <div style={{
+                                width: '32px', height: '32px', borderRadius: '50%',
+                                background: '#FF6C37', display: 'flex', alignItems: 'center',
+                                justifyContent: 'center', color: '#fff', fontSize: '13px', fontWeight: 700
+                            }}>
                                 {user?.name ? user.name.charAt(0) : 'A'}
                             </div>
                         </div>
                     </div>
                 </header>
 
-                {/* Main View Area */}
-                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 relative">
-                    {/* Contenedor central ajustando padding para SaaS */}
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full max-w-[1400px]">
+                {/* Content Area */}
+                <main style={{
+                    flex: 1, overflowY: 'auto', overflowX: 'hidden',
+                    background: '#F5F5F5', padding: '24px'
+                }}>
+                    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
                         {children}
                     </div>
                 </main>
             </div>
+
+            {/* Responsive CSS */}
+            <style>{`
+                @media (min-width: 1024px) {
+                    .sidebar {
+                        position: fixed !important;
+                        left: 0 !important;
+                    }
+                    .main-wrapper {
+                        margin-left: 260px !important;
+                    }
+                    .hamburger-btn { display: none !important; }
+                    .sidebar-close-btn { display: none !important; }
+                    .sidebar-overlay { display: none !important; }
+                }
+                @media (max-width: 1023px) {
+                    .sidebar-close-btn { display: block !important; }
+                    .topbar-search { display: none !important; }
+                }
+                @media (max-width: 640px) {
+                    .topbar-user { display: none !important; }
+                }
+            `}</style>
         </div>
     );
 };

@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
-import { Rocket, Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Loader2, Mail, Lock, Rocket } from 'lucide-react';
 
-/**
- * Login Component
- * Implementa la estética "Liquid Glass 2026" con validación de baja fricción.
- */
 const Login = ({ onLogin }) => {
     const [credentials, setCredentials] = useState({
         clientId: import.meta.env.VITE_FACTUS_CLIENT_ID || '',
@@ -13,112 +9,254 @@ const Login = ({ onLogin }) => {
         password: import.meta.env.VITE_FACTUS_PASSWORD || ''
     });
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setError('');
         try {
             await onLogin(credentials);
         } catch (err) {
-            console.error(err);
+            setError('Credenciales inválidas. Verifique email y contraseña.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="flex items-center justify-center min-h-[80vh] py-12 animate-fade-in relative z-10">
-            <div className="card-nova w-full max-w-md p-10 relative">
-                {/* Accent blobs */}
-                <div className="absolute -top-12 -left-12 w-40 h-40 bg-indigo-500/10 blur-2xl rounded-full"></div>
-                <div className="absolute -bottom-12 -right-12 w-40 h-40 bg-purple-500/10 blur-2xl rounded-full"></div>
+        <div style={{
+            display: 'flex',
+            minHeight: '100vh',
+            fontFamily: "'Inter', sans-serif"
+        }}>
+            {/* Left Branding Panel */}
+            <div style={{
+                flex: '0 0 45%',
+                background: '#1C1C1C',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '48px',
+                position: 'relative',
+                overflow: 'hidden'
+            }}
+                className="login-branding"
+            >
+                {/* Subtle glow */}
+                <div style={{
+                    position: 'absolute',
+                    width: '300px',
+                    height: '300px',
+                    background: 'radial-gradient(circle, rgba(255,108,55,0.15), transparent 70%)',
+                    top: '30%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    pointerEvents: 'none'
+                }}></div>
 
-                <div className="text-center mb-10 relative">
-                    <div className="inline-flex p-4 rounded-3xl bg-white/5 border border-white/10 mb-6 shadow-inner">
-                        <Rocket size={40} className="text-indigo-400" />
+                <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+                    <div style={{
+                        width: '80px',
+                        height: '80px',
+                        background: '#FF6C37',
+                        borderRadius: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 24px',
+                        boxShadow: '0 8px 32px rgba(255,108,55,0.3)'
+                    }}>
+                        <Rocket size={40} color="#fff" />
                     </div>
-                    <h2 className="text-4xl font-bold text-gradient mb-3">
-                        Factus Nova
-                    </h2>
-                    <p className="text-slate-400 text-sm font-medium tracking-wide">
-                        ENTERPRISE INVOICING SOLUTION
-                    </p>
-                </div>
+                    <h1 style={{
+                        color: '#FFFFFF',
+                        fontSize: '32px',
+                        fontWeight: 800,
+                        letterSpacing: '-0.02em',
+                        marginBottom: '8px'
+                    }}>Factus Nova</h1>
+                    <p style={{
+                        color: '#9A9A9A',
+                        fontSize: '15px',
+                        fontWeight: 400
+                    }}>Facturación Electrónica DIAN — Simplificada</p>
 
-                <form onSubmit={handleSubmit} className="space-y-6 relative">
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-500 ml-1 uppercase tracking-widest">Client Credentials</label>
-                        <div className="relative">
-                            <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                            <input
-                                type="text"
-                                className="input-nova pl-12"
-                                placeholder="Client ID"
-                                value={credentials.clientId}
-                                onChange={(e) => setCredentials({ ...credentials, clientId: e.target.value })}
-                                required
-                            />
-                        </div>
-                        <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                            <input
-                                type="password"
-                                className="input-nova pl-12"
-                                placeholder="Client Secret"
-                                value={credentials.clientSecret}
-                                onChange={(e) => setCredentials({ ...credentials, clientSecret: e.target.value })}
-                                required
-                            />
-                        </div>
-                        <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                            <input
-                                type="email"
-                                className="input-nova pl-12"
-                                placeholder="Correo API Factus"
-                                value={credentials.email}
-                                onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
-                                required
-                            />
-                        </div>
-                        <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                            <input
-                                type="password"
-                                className="input-nova pl-12"
-                                placeholder="Contraseña Sandbox"
-                                value={credentials.password}
-                                onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                                required
-                            />
-                        </div>
+                    <div style={{
+                        display: 'flex',
+                        gap: '16px',
+                        marginTop: '48px',
+                        justifyContent: 'center'
+                    }}>
+                        {[
+                            { icon: '⚡', title: 'Alta Velocidad', sub: 'Procesamiento inmediato' },
+                            { icon: '🔒', title: 'Seguridad Total', sub: 'Cifrado de grado bancario' }
+                        ].map((feat, i) => (
+                            <div key={i} style={{
+                                background: '#2D2D2D',
+                                borderRadius: '12px',
+                                padding: '16px 20px',
+                                textAlign: 'center',
+                                minWidth: '140px'
+                            }}>
+                                <div style={{ fontSize: '24px', marginBottom: '6px' }}>{feat.icon}</div>
+                                <div style={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>{feat.title}</div>
+                                <div style={{ color: '#9A9A9A', fontSize: '11px' }}>{feat.sub}</div>
+                            </div>
+                        ))}
                     </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="btn-primary w-full group shadow-2xl shadow-indigo-600/20 disabled:opacity-50"
-                    >
-                        {loading ? 'Autenticando...' : (
-                            <>
-                                Iniciar Sesión Segura
-                                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                            </>
-                        )}
-                    </button>
-
-                    <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500 uppercase tracking-widest mt-4">
-                        <ShieldCheck size={12} className="text-emerald-500" />
-                        Conexión Encriptada TLS 1.3
-                    </div>
-                </form>
-
-                <div className="mt-10 text-center border-t border-white/10 pt-6">
-                    <p className="text-xs text-slate-400">
-                        ¿Requieres acceso? <a href="https://factus.co" target="_blank" className="text-indigo-400 hover:text-indigo-300 font-bold no-underline transition-colors uppercase tracking-wider">Solicitar credenciales</a>
-                    </p>
                 </div>
             </div>
+
+            {/* Right Form Panel */}
+            <div style={{
+                flex: 1,
+                background: '#F5F5F5',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '32px'
+            }}>
+                <div style={{
+                    background: '#FFFFFF',
+                    borderRadius: '16px',
+                    padding: '48px 40px',
+                    width: '100%',
+                    maxWidth: '420px',
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+                    border: '1px solid #E6E6E6'
+                }}>
+                    <h2 style={{
+                        fontSize: '24px',
+                        fontWeight: 700,
+                        color: '#1C1C1C',
+                        marginBottom: '4px'
+                    }}>Iniciar Sesión</h2>
+                    <p style={{
+                        fontSize: '14px',
+                        color: '#6B6B6B',
+                        marginBottom: '32px'
+                    }}>Bienvenido de nuevo a Factus Nova</p>
+
+                    {error && (
+                        <div style={{
+                            background: '#FFEBEE',
+                            border: '1px solid #FFCDD2',
+                            borderRadius: '8px',
+                            padding: '12px 16px',
+                            marginBottom: '20px',
+                            fontSize: '13px',
+                            color: '#FF5252',
+                            fontWeight: 500
+                        }}>{error}</div>
+                    )}
+
+                    <form onSubmit={handleSubmit}>
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                color: '#1C1C1C',
+                                marginBottom: '8px'
+                            }}>
+                                <Mail size={14} color="#6B6B6B" />
+                                Email
+                            </label>
+                            <input
+                                type="email"
+                                value={credentials.email}
+                                onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
+                                placeholder="nombre@empresa.com"
+                                className="input-factus"
+                                required
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: '28px' }}>
+                            <label style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                color: '#1C1C1C',
+                                marginBottom: '8px'
+                            }}>
+                                <Lock size={14} color="#6B6B6B" />
+                                Contraseña
+                            </label>
+                            <input
+                                type="password"
+                                value={credentials.password}
+                                onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                                placeholder="••••••••"
+                                className="input-factus"
+                                required
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            style={{
+                                width: '100%',
+                                padding: '14px',
+                                background: loading ? '#E6E6E6' : '#FF6C37',
+                                color: loading ? '#9A9A9A' : '#FFFFFF',
+                                border: 'none',
+                                borderRadius: '10px',
+                                fontSize: '15px',
+                                fontWeight: 700,
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2 size={18} className="animate-spin" />
+                                    Verificando...
+                                </>
+                            ) : (
+                                'Iniciar Sesión →'
+                            )}
+                        </button>
+                    </form>
+
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        marginTop: '24px',
+                        fontSize: '12px',
+                        color: '#9A9A9A'
+                    }}>
+                        <span style={{
+                            width: '7px',
+                            height: '7px',
+                            borderRadius: '50%',
+                            background: '#00C853',
+                            display: 'inline-block'
+                        }}></span>
+                        Conectado al Sandbox de Factus API
+                    </div>
+                </div>
+            </div>
+
+            {/* Responsive: Hide branding on mobile */}
+            <style>{`
+                @media (max-width: 768px) {
+                    .login-branding { display: none !important; }
+                }
+            `}</style>
         </div>
     );
 };
